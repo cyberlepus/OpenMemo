@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CS_WindowAppearance</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="./style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="ウィンドウの外観について">ウィンドウの外観について</h1>
+<h2 id="アピアランスの取得方法">アピアランスの取得方法</h2>
+<p>Win32APIを呼び出すしかない模様。</p>
+<p>フレームの幅はSM_CXFRAME, SM_CYFRAME
+にて取得できる。試してみた所、ビルド環境の .NET Framework
+のバージョンでも変化する模様。<br />
+調べたところ.NET Framework 4.5 以降から違ってきている。</p>
+<pre><code>.NET Framework 3.0      8, 8
+.NET Framework 3.5      8, 8
+.NET Framework 4.0      8, 8
+.NET Framework 4.5      4, 4
+.NET Framework 4.6.1    4, 4</code></pre>
+<p>見た目上は変化なし。</p>
+</body>
+</html>

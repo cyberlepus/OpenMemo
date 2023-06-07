@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CS_DLL</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="./style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h2 id="cのdllを呼び出す">C++のDLLを呼び出す</h2>
+<h3 id="dll-の関数の確認方法">DLL の関数の確認方法</h3>
+<p>Visual Studio 付属のコマンドプロンプトを使用する。<br />
+<code>&gt;dumpbin /exports &lt;DLLファイル&gt;</code>で確認できる<br />
+例)</p>
+<pre><code>&gt;dumpbin /exports C:\Windows\System32\kernel32.dll
+Microsoft (R) COFF/PE Dumper Version 14.16.27026.1
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file C:\Windows\System32\kernel32.dll
+
+File Type: DLL
+
+  Section contains the following exports for KERNEL32.dll
+
+    00000000 characteristics
+    38B369C4 time date stamp
+        0.00 version
+           1 ordinal base
+        1633 number of functions
+        1633 number of names
+
+    ordinal hint RVA      name
+
+          1    0          AcquireSRWLockExclusive (forwarded to NTDLL.RtlAcquireSRWLockExclusive)
+          2    1          AcquireSRWLockShared (forwarded to NTDLL.RtlAcquireSRWLockShared)
+          3    2 00020080 ActivateActCtx
+          4    3 0001B700 ActivateActCtxWorker
+          5    4 0005A140 AddAtomA
+          6    5 000128F0 AddAtomW
+          7    6 00025640 AddConsoleAliasA
+          8    7 00025650 AddConsoleAliasW
+                :
+                :</code></pre>
+<h3 id="dll-が-32bit-or-64bit-か確認する方法">DLL が 32bit or 64bit
+か確認する方法</h3>
+<p>Visual Studio 付属のコマンドプロンプトを使用する。<br />
+<code>dumpbin /headers &lt;DLLファイル&gt;</code>で確認できるが、大量のヘッダー情報が出力されるので、<code>findstr machine</code>
+にて絞り込む</p>
+<pre><code>dumpbin /headers C:\Windows\System32\kernel32.dll | findstr machine
+            8664 machine (x64)</code></pre>
+</body>
+</html>

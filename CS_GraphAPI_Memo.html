@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CS_GraphAPI_Memo</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="./style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h2
+id="drive内の全てのdriveitemの差分読み込み">Drive内の全てのDriveItemの差分読み込み</h2>
+<p>ドライブ内ある全ての<code>DriveItem</code>を取得するには、ルートディレクトリから子の<code>DriveItem</code>を取得するという処理を<br />
+全てのフォルダに対して行う必要がある。この処理は非常に時間がかかる上、各フォルダ階層の取得に時間差が生じる為、<br />
+ドライブ全体の情報として整合性が取れていない可能性がある。</p>
+<p>差分読み込みでは、最初にドライブ内ある全ての<code>DriveItem</code>を取得する事ができ、それ以後はそこからの差分を取得する事で、<br />
+ドライブ内の情報を整合性が取れた状態で最新状態にすることが出来る。</p>
+<p>最初の全体取得でも子階層をたどる方法よりは早いので、基本的には差分読み込みを採用した方が良い。</p>
+<p>https://docs.microsoft.com/ja-jp/graph/api/driveitem-delta</p>
+<h3 id="deltatoken-を使った読み込み">deltaToken を使った読み込み</h3>
+<p>差分読み込みは<code>string</code>型の<code>deltaToken</code>を利用する。<br />
+<code>deltaToken</code>は最初<code>null</code>で指定する。次に読み込む時には前回の取得時に<code>deltaToken</code>の値を渡されるのでそれを保存しておく。</p>
+<pre><code>    string deltaToken = null;
+
+    private List&lt;DriveItem&gt; GetDriveItemList() {
+        var itemList = new List&lt;DriveItem&gt;();
+        var request = graphClient.Drives[driveId].Root.Delta(deltaToken).Request();
+        do {https://docs.microsoft.com/ja-jp/graph/api/driveitem-delta
+            var page = request.WithMaxRetry(10).WithMaxRetry(new TimeSpan(0,0,0,2,0)).GetAsync().Result;
+            itemList.AddRange(page);
+            if((request = page.NextPageRequest) == null) {
+                GetDeltaLink(page.AdditionalData);
+            }
+        } while (request != null);</code></pre>
+<p><code>deltaToken</code>の値は<code>page.AdditionalData["@odata.deltaLink"]</code>にURI形式で保存されているのだが、<br />
+最初の読み込み時と DeltaToken
+を指定した時の読み込みでは保存されているURIの形式が若干違う。</p>
+<ul>
+<li>最初の deltaToken が null
+の時の<code>@odata.deltaLink</code>値<br />
+<code>https://graph.microsoft.com/v1.0/drives/{driveId}/root/microsoft.graph.delta(token=null)?token={deltaToken}</code></li>
+<li>deltaToken
+を指定して読み込んだ時の<code>@odata.deltaLink</code>値<br />
+<code>https://graph.microsoft.com/v1.0/drives/{driveId}/root/microsoft.graph.delta(token='{deltaToken}')</code></li>
+</ul>
+<p>次のように取得する必要がある。</p>
+<pre><code>    private void GetDeltaLink(IDictionary&lt;string,object&gt; additional) {
+        var deltaLink = additional[&quot;@odata.deltaLink&quot;].ToString();
+        var uri = new Uri(deltaLink);
+        if (string.IsNullOrEmpty(uri.Query)) {
+            const string key = &quot;delta(token=&#39;&quot;;
+            var p0 = deltaLink.IndexOf(key);
+            if (p0 == -1) { return; }
+            p0 += key.Length;
+            var p1 = deltaLink.IndexOf(&#39;\&#39;&#39;, p0);
+            if (p1 == -1) { return; }
+            deltaToken = deltaLink.Substring(p0, p1 - p0);
+        } else {
+            var queries = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var token = queries.Get(&quot;token&quot;);
+            if (token == null) { return; }
+            deltaToken = token;
+        }
+    }</code></pre>
+<h3 id="driveitem-からパス情報を取得する">DriveItem
+からパス情報を取得する。</h3>
+<p>DriveItem.WebUrl
+にはアクセスするためのURIがあるので基本ここから取得できる。<br />
+URIは次のような形式で保存されている。<br />
+<code>https:{tenantName}.sharepoint.com/sites/{driveName}/{documentName}/{path...}</code><br />
+- {tenantName} = テナント名。例)cyberconnect2<br />
+- {driveName} = ドライブ名(ドライブIdでは無い)。例)devsupport<br />
+- {documentName} = ドキュメント名。例)Shared%20Documents</p>
+<p>しかし、Deltaを使ってDriveItemを取得した場合、Web上で編集可能な形式のドキュメント(pptx,xlsx,docx)等は以下の形式になっている。<br />
+`https://{tenantName}.sharepoint.com/sites/{driveName}/_layouts/15/Doc.aspx?sourcedoc=%7B{documentId}%7D&amp;file={fileName}&amp;action=default&amp;mobileredirect=true<br />
+- {documentId} =
+ファイルのId?(DriveItem.Idではない)。例)F44727BB-D344-4DE3-B2F1-E7F59BF8F5EB<br />
+- {documentName} = ドキュメント名。例)NS4_inGame.xlsx</p>
+<p>この場合、パス情報を取ることは出来ないので別の手段で取得する必要がある。<br />
+<code>DriveItem.ParentRefernce.Path</code>
+に親のパス情報があるので、これを利用する。<br />
+※ドライブのルートフォルダは、親が無い為<code>null</code>となる。</p>
+<h3 id="driveitem-の重複">DriveItem の重複</h3>
+<p>deltaToken
+を使った読み込みでは、同じ<code>DriteItem</code>が読み込まれることがある。<br />
+リファレンスには次のように書かれている。</p>
+<blockquote>
+<p>差分フィードには、さまざまな理由から同じアイテムが複数回表示される場合があります。その場合は最後に出現したものを使用する必要があります。</p>
+</blockquote>
+<p>次のような方法で重複を上書きすることが出来る。</p>
+<pre><code>    var dic = new Dictionary&lt;string,DriveItem&gt;();
+    itemList.ForEach(x =&gt; dic[x.Id] = x);
+    itemList = dic.Values.ToList();
+
+</code></pre>
+<h3 id="特殊な-onenote">特殊な OneNote</h3>
+<p>DriveItem を取得した際、OneNote関連は特殊な状態で配置されている。</p>
+<p>SharePoint上でファイルに見える DriveItem
+は<code>DriveItem.Folder</code>,<code>DriveItem.File</code>ともに<code>null</code>が入っている。<br />
+しかし、その下にOneNoteのファイルと削除用のごみ箱フォルダが存在していて、これらの<code>DriveItem.Reference.Id</code>はRoot
+となる DriveItem を指している。</p>
+<pre><code>    [OneNote Root]  -&gt; 見かけ上ファイルに見えるがフォルダ扱い？
+    Name            :
+    Folder          : null
+    File            : null
+    Size            : あり   (下にあるファイルのサイズ総計ではない)</code></pre>
+<p>OneNote 1ページ分</p>
+<pre><code>    Name            : 
+    Folder          : null
+    File            : あり
+    File.MimeType   : application/msonenote
+    FileSystemInfo  : null
+    Size            : あり
+    ParentReference : あり。ルートの DriveItem を指している</code></pre>
+<p>システム側で生成する？目次用のデータ？</p>
+<pre><code>    Name            : Open Notebook.onetoc2
+    Folder          : null
+    File            : あり
+    File.MimeType   : application/octet-stream
+    Size            : あり
+    FileSystemInfo  : あり。ルートの DriveItem を指している</code></pre>
+<p>システム側で生成する？フォルダ扱い。削除されたノートはこちらに入ると思われる。<br />
+この下に[～.onetoc2]、[～.one]の2種類のファイルが存在する。</p>
+<pre><code>    Name            : OneNote_RecycleBin
+    Id              : &quot;01XSBIS7ZVMPN6JEL6S5EJQLDSBHANVF2U&quot;
+    Folder          : あり
+    FolderChildCount: あり
+    File            : null
+    Size            : あり(下にあるファイルのサイズ総計)
+    FileSystemInfo  : あり。ルートの DriveItem を指している</code></pre>
+<p>```</p>
+</body>
+</html>

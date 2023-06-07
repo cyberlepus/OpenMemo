@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CS_ImageProcess</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="./style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="c-のイメージ処理">C# のイメージ処理</h1>
+<ul>
+<li>System.Drawing.Bitmap
+<ul>
+<li>画像をピクセルの集合として扱うクラス。
+<ul>
+<li>A1R5G5B5,R5G5B5,R8GB88,A8R8G8B8,A16R16G16B16…
+様々な種類のピクセルフォーマットが扱える。</li>
+<li><a
+href="https://docs.microsoft.com/en-us/dotnet/api/system.drawing.imaging.pixelformat?view=dotnet-plat-ext-6.0">実際の指定はこちら</a></li>
+</ul></li>
+<li>ピクセル値を読み出したり、描画したり、切り出ししたり、拡大縮小したり、と画像に対して様々な操作が行える。</li>
+<li>bmpフォーマットとは関係が無い。</li>
+</ul></li>
+<li>System.Drawing.Image
+<ul>
+<li><code>System.Drawing.Bitmap</code>,
+<code>System.Drawing.Imaging.Metafile</code>に画像を扱う為の基本的な機能を与える基本クラス</li>
+<li>このクラスでファイルやストリームからロードしてから<code>Bitmap</code>クラスに変換して使用する。</li>
+</ul></li>
+<li>Magick.NET
+<ul>
+<li>https://github.com/dlemstra/Magick.NET</li>
+<li>Apache-2.0 License</li>
+<li>画像処理変換コマンドツール ImageMagick
+の機能をC#で使用するためのライブラリ
+<ul>
+<li><a href="https://imagemagick.org/index.php">ImageMagick</a> <a
+href="https://github.com/ImageMagick/ImageMagick">リポジトリ</a></li>
+<li>100以上のフォーマットに対応しており、psd,
+pdf,PostScripts等のフォーマットを扱える。</li>
+</ul></li>
+</ul></li>
+<li>OpenCVSharp
+<ul>
+<li>https://github.com/shimat/opencvsharp</li>
+<li>Apache-2.0 License</li>
+<li>OpenCVのC#ラッパーライブラリ
+<ul>
+<li>OpenCV
+は画像認識が主眼のライブラリだが、画像の読み書きや画像処理もできる。</li>
+</ul></li>
+<li>同じ様なライブラリとして
+<ul>
+<li><a
+href="https://www.emgu.com/wiki/index.php/Main_Page">EmguCV</a>・<a
+href="https://github.com/emgucv/emgucv">リポジトリ</a>
+<ul>
+<li>現在も積極的に開発中。GPL v3 or 商用ライセンス</li>
+</ul></li>
+<li><a href="https://github.com/horizongir/opencv.net/">OpenCVDotNet</a>
+<ul>
+<li>現在も細々と更新はされている。MIT License</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>その他
+<ul>
+<li>Pillow
+<ul>
+<li>PIL(PythonImagingLibrary)から派生したイメージ処理ライブラリ。</li>
+<li>検索したがC#ラッパーライブラリはなし</li>
+</ul></li>
+</ul></li>
+</ul>
+</body>
+</html>
